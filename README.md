@@ -1,3 +1,6 @@
+Entkoppelter Fork von [lasselukkari]https://travis-ci.org/lasselukkari/DuinoDCX
+
+
 
 DuinoDCX [![Build Status](https://travis-ci.org/lasselukkari/DuinoDCX.svg?branch=master)](https://travis-ci.org/lasselukkari/DuinoDCX)
 ========
