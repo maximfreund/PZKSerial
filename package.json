@@ -1,13 +1,18 @@
 {
-  "name": "DuinoDCX",
-  "description": "Standalone WIFI remote controller for the Behringer Ultradrive Pro (DCX2496)",
-  "version": "0.0.39",
-  "author": "Lasse Lukkari <lasse.lukkari@gmai.com>",
+  "name": "pilzkultursound",
+  "description": "PilzkulturSound: standalone Wi-Fi remote for the Behringer Ultradrive Pro (DCX2496). Fork of DuinoDCX.",
+  "version": "0.1.0",
+  "private": true,
+  "author": "Lasse Lukkari <lasse.lukkari@gmail.com>",
   "contributors": [
     "Ilkka Huhtakallio"
   ],
-  "repository": "github:lasselukkari/DuinoDCX",
+  "repository": "github:maximfreund/PZKSerial",
   "license": "MIT",
+  "brand": {
+    "name": "PilzkulturSound",
+    "releasesRepo": "maximfreund/PZKSerial"
+  },
   "devDependencies": {
     "awot-scripts": "0.0.38"
   },
@@ -15,29 +20,17 @@
     "dcx-ui": "0.0.11"
   },
   "scripts": {
-    "build": "awot-static",
-    "flash": "awot-command-line",
-    "upload": "awot-static && awot-command-line"
+    "build": "node scripts/brand-ui.js && awot-static",
+    "compile": "arduino-cli compile --fqbn esp32:esp32:esp32:PartitionScheme=min_spiffs --output-dir build/firmware DuinoDCX"
   },
   "awot-static": {
-    "sources": "./node_modules/dcx-ui/dist",
+    "sources": "./build/ui",
     "indexFile": "index.html",
     "sketchDir": "./DuinoDCX",
     "exclude": [
       "*.map",
       "service-worker.js"
     ]
-  },
-  "awot-command-line": {
-    "sketch": "DuinoDCX/DuinoDCX.ino",
-    "idePath": "/Applications/Arduino.app/Contents/MacOS/arduino",
-    "port": "/dev/cu.Repleo-PL2303-00002014",
-    "board": {
-      "package": "esp32",
-      "arch": "esp32",
-      "board": "esp32"
-    },
-    "action": "upload"
   },
   "renovate": {
     "extends": [

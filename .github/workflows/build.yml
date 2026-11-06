@@ -1,0 +1,71 @@
+name: Build firmware
+
+on:
+  push:
+    branches: [master]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write # attach the firmware to GitHub releases
+
+env:
+  ESP32_CORE: "3.3.7"
+  ESP32_INDEX: https://espressif.github.io/arduino-esp32/package_esp32_index.json
+  FQBN: esp32:esp32:esp32:PartitionScheme=min_spiffs
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Build web UI into StaticFiles.h
+        run: |
+          npm ci
+          npm run build
+
+      - uses: arduino/setup-arduino-cli@v2
+
+      - name: Cache ESP32 core
+        uses: actions/cache@v4
+        with:
+          path: ~/.arduino15
+          key: arduino-esp32-${{ env.ESP32_CORE }}
+
+      - name: Install ESP32 core
+        run: |
+          arduino-cli core update-index --additional-urls "$ESP32_INDEX"
+          arduino-cli core install "esp32:esp32@$ESP32_CORE" --additional-urls "$ESP32_INDEX"
+
+      - name: Compile
+        run: arduino-cli compile --fqbn "$FQBN" --warnings default --output-dir build/firmware DuinoDCX
+
+      # The web UI's update checker expects release assets named duinodcx-<tag>.bin
+      - name: Name firmware
+        id: firmware
+        run: |
+          version=$(grep -oP '#define VERSION\s+"\K[^"]+' DuinoDCX/Config.h)
+          if [[ "$GITHUB_REF" == refs/tags/* && "$GITHUB_REF_NAME" != "$version" ]]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match VERSION $version in Config.h"
+            exit 1
+          fi
+          cp build/firmware/DuinoDCX.ino.bin "duinodcx-$version.bin"
+          echo "file=duinodcx-$version.bin" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firmware
+          path: ${{ steps.firmware.outputs.file }}
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.firmware.outputs.file }}
